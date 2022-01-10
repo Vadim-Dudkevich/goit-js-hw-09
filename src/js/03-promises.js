@@ -1,78 +1,43 @@
 import Notiflix from 'notiflix';
 
-const refs = {
-  form: document.querySelector('form'),
-  delay: document.querySelector('input[name = delay]'),
-  step: document.querySelector('input[name =step]'),
-  amount: document.querySelector('input[name =amount]'),
-};
+const formRef = document.querySelector('.form');
+formRef.addEventListener('submit', onSubmitForm);
 
-console.log(refs.delay);
-
-console.log(refs.amount.value);
-
-let setID = null;
-
-let DATA = [];
-
-refs.form.addEventListener('input', onCoice);
-refs.form.addEventListener('submit', onSubmit);
-
-function onSubmit(e) {
+function onSubmitForm(e) {
   e.preventDefault();
-  console.log(`Form Submited`);
 
-  delayBilder(refs.amount, refs.delay, refs.step);
+  let delay = Number(e.currentTarget.delay.value);
 
-  DATA.forEach((currentValue, index) => {
-    console.log(currentValue);
-    console.log(index);
+  const step = Number(e.currentTarget.step.value);
 
-    createPromise(index, currentValue).then(onSucsess).catch(onError);
-  });
+  const amount = Number(e.currentTarget.amount.value);
 
-  DATA = [];
-  clearTimeout(setID);
-}
-
-function onSucsess(result) {
-  console.log(result);
-  Notiflix.Notify.success(`${result}`);
-}
-
-function onError(error) {
-  console.log(error);
-
-  Notiflix.Notify.failure(`${error}`);
-}
-
-function onCoice(e) {
-  refs[e.target.name] = e.target.value;
-  console.log(refs);
-}
-
-function delayBilder(amount, delay, step) {
-  DATA = [];
-  for (let i = 0; i < amount; i += 1) {
-    delay = Number(delay);
-    step = Number(step);
-
-    const total = delay + step * i;
-
-    DATA.push(total);
-    console.log(DATA);
+  for (let position = 1; position <= amount; position += 1) {
+    createPromise(position, delay)
+      .then(({ position, delay }) => {
+        setTimeout(() => {
+          Notiflix.Notify.success(`✅ Fulfilled promise ${position} in ${delay}ms`, {
+            useIcon: false,
+          });
+        }, delay);
+      })
+      .catch(({ position, delay }) => {
+        setTimeout(() => {
+          Notiflix.Notify.failure(`❌ Rejected promise ${position} in ${delay}ms`, {
+            useIcon: false,
+          });
+        }, delay);
+      });
+    delay += step;
   }
 }
-
 function createPromise(position, delay) {
-  return new Promise((reslove, reject) => {
-    const shouldResolve = Math.random() > 0.3;
-    const setID = setTimeout(() => {
-      if (shouldResolve) {
-        reslove(`✅ Fulfilled promise ${position + 1} in ${delay}ms`);
-      }
-
-      reject(`❌ Rejected promise ${position + 1} in ${delay}ms`);
-    }, delay);
+  const shouldResolve = Math.random() > 0.3;
+  const objectPromise = { position, delay };
+  return new Promise((resolve, reject) => {
+    if (shouldResolve) {
+      resolve(objectPromise);
+    }
+    reject(objectPromise);
   });
 }
